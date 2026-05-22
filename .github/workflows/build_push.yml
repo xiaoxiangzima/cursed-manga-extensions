@@ -88,21 +88,27 @@ jobs:
         run: |
           if [ -n "$SIGNING_KEY" ]; then
             echo "$SIGNING_KEY" | base64 -d > signingkey.jks
+            echo "ALIAS=${ALIAS:-debug}" >> $GITHUB_ENV
+            echo "KEY_STORE_PASSWORD=${KEY_STORE_PASSWORD:-debugpw}" >> $GITHUB_ENV
+            echo "KEY_PASSWORD=${KEY_PASSWORD:-debugpw}" >> $GITHUB_ENV
           else
             keytool -genkey -v -keystore signingkey.jks -alias debug -keyalg RSA -keysize 2048 -validity 36500 -storepass debugpw -keypass debugpw -dname "CN=Debug" -noprompt
-            echo "KEY_STORE_PASSWORD=debugpw" >> $GITHUB_ENV
             echo "ALIAS=debug" >> $GITHUB_ENV
+            echo "KEY_STORE_PASSWORD=debugpw" >> $GITHUB_ENV
             echo "KEY_PASSWORD=debugpw" >> $GITHUB_ENV
           fi
         env:
           SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+          ALIAS: ${{ secrets.ALIAS }}
+          KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
       - name: Build extensions (${{ matrix.chunk.number }})
         env:
           MODULES: ${{ join(matrix.chunk.modules, ' ') }}
-          ALIAS: ${{ secrets.ALIAS }}
-          KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          ALIAS: ${{ env.ALIAS }}
+          KEY_STORE_PASSWORD: ${{ env.KEY_STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ env.KEY_PASSWORD }}
         run: |
           ./gradlew $MODULES
 
